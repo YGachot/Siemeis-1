@@ -34,9 +34,9 @@ jobs:
             run: |
               echo "${{ secrets. SSH_KEY }}" > private_key
               chmod 750 private_key
-              scp - P 22222 -i ./private_key simeis-server-CYM_to_debian_V${{steps.version.outputs.version}}.deb mateo@78.123.114.124:~
+              scp -P 22222 -i ./private_key simeis-server-CYM_to_debian_V${{steps.version.outputs.version}}.deb mateo@78.123.114.124:~
               rm private_key
-              
+
           - name: Release the new binaries
             uses: mini-bomba/create-github-release@v1.2.0
             with:

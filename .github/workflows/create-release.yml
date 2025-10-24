@@ -33,7 +33,7 @@ jobs:
           - name: Upload deb
             run: |
               echo "${{ secrets. SSH_KEY }}" > private_key
-              chmod 750 private_key
+              chmod 600 private_key
               scp -P 22222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./private_key simeis-server-CYM_to_debian_V${{steps.version.outputs.version}}.deb mateo@78.123.114.124:~
               rm private_key
 

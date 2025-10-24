@@ -15,7 +15,7 @@ jobs:
 
       - name: Clone repository & Config GitBash
         run: |
-          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/YGachot/Simeis-1 repo
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/YGachot/Siemeis-1 repo
           cd repo
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@github.com"

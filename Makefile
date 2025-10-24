@@ -24,4 +24,3 @@ clean:
 
 update:
 	cargo update
-	 

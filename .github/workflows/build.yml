@@ -24,7 +24,7 @@ jobs:
 
       - name: Clone repository
         run: |
-          git clone --branch main https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/mtbvr/Simeis repo
+          git clone --branch main https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/YGachot/Siemeis-1 repo
 
       - name: Build project
         run: |
@@ -59,7 +59,7 @@ jobs:
 
       - name: Clone repository
         run: |
-          git clone --branch main https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/mtbvr/Simeis repo
+          git clone --branch main https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/YGachot/Siemeis-1 repo
 
       - name: Generate manual
         run: |
@@ -83,7 +83,7 @@ jobs:
 
       - name: Clone repository
         run: |
-          git clone --branch main https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/mtbvr/Simeis repo
+          git clone --branch main https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/YGachot/Siemeis-1 repo
 
       - name: Run checks
         run: |

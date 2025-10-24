@@ -1,10 +1,11 @@
 #!/bin/sh
 
 set -e 
-if ! id simeis
+if ! id simeis >/dev/null 2>&1
 then
     useradd -r -M simeis
-    
+fi
+
 systemctl enabled simeis.service
 systemctl start simeis.service
 exit 0

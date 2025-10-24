@@ -1,0 +1,7 @@
+.\" Manage for simeis
+.SH NAME
+cargo run will lauch the server
+.SH DESCRIPTION
+Simeis man for debian
+.SH AUTHOR
+CYM

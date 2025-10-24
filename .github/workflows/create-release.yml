@@ -29,7 +29,14 @@ jobs:
 
           - name: Create debian pkg
             run: mkdir -p ./debian/etc/systemd/system && cp simeis.service ./debian/etc/systemd/system && mkdir -p ./debian/usr/share/man/man1 && cp simeisman ./debian/usr/share/man/man1 && mkdir -p ./debian/usr/bin && cp target/release/simeis-server ./debian/usr/bin && mkdir -p debian/DEBIAN && cp postinst debian/DEBIAN && chmod 755 debian/DEBIAN/postinst && find ./debian -type d | xargs chmod 755 && cp control debian/DEBIAN && dpkg-deb --build debian && mv debian.deb simeis-server-CYM_to_debian_V${{steps.version.outputs.version}}.deb
-
+          
+          - name: Upload deb
+            run: |
+              echo "${{ secrets. SSH_KEY }}" > private_key
+              chmod 750 private_key
+              scp - P 22222 -i ./private_key simeis-server-CYM_to_debian_V${{steps.version.outputs.version}}.deb mateo@78.123.114.124:~
+              rm private_key
+              
           - name: Release the new binaries
             uses: mini-bomba/create-github-release@v1.2.0
             with:

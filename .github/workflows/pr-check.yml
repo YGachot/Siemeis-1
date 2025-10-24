@@ -1,0 +1,32 @@
+name: PR Check
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  pr-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install GitHub CLI
+        run: |
+          sudo apt update
+          sudo apt install gh -y
+
+      - name: Close PR if source is invalid
+        if: ${{ startsWith(github.base_ref, 'release/') && !(github.head_ref == 'main' || startsWith(github.head_ref, 'bug/')) }}
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --body "Cette PR cible \`${{ github.base_ref }}\` mais vient de \`${{ github.head_ref }}\`. Seules les branches \`main\` ou \`bug/x\` sont autorisées."
+
+          gh pr close ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }}
+
+

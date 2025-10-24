@@ -1,0 +1,49 @@
+name: CI Update Dependencies
+
+on:
+  schedule:
+    - cron: '0 1 * * *'
+
+jobs:
+  update-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install GitHub CLI
+        run: |
+          sudo apt update
+          sudo apt install gh -y
+
+      - name: Clone repository & Config GitBash
+        run: |
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/mtbvr/Simeis repo
+          cd repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@github.com"
+
+      - name: Update dependencies
+        run: |
+          cd repo
+          make update
+
+      - name: Create Commit & Push
+        env:
+            GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          cd repo
+          git checkout -b bot/update-deps || git checkout bot/update-deps
+          git add .
+          git commit -m "Update auto des commits" || echo "Pas de changements"
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} bot/update-deps
+
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd repo
+          gh pr create \
+            --title "Update dépendences" \
+            --body "Update automatique des dépendences" \
+            --head bot/update-deps \
+            --label "bot/update" \
+            --base main

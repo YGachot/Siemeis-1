@@ -1,0 +1,117 @@
+name: Analyse avancée du code
+
+on:
+  pull_request:
+    branches:
+      - 'release/**'
+
+jobs:
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup test cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo
+            target/release/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', '**/*.rs') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.os }}-cargo-
+
+      - name: Run unit tests with heavy-testing
+        run: cargo test --features heavy-testing
+
+      - name: Run make test
+        run: make test
+
+      - name: Run functional tests
+        run: make testf
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install cargo-audit & cargo-udeps
+        run: |
+          cargo install cargo-audit
+          cargo install cargo-udeps
+
+      - name: Run audit
+        run: cargo audit
+
+      - name: Check unused dependencies
+        run: cargo +nightly udeps
+
+  coverage:
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.pull_request.base.ref, 'release/')
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore Rust cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo
+            target/release/
+
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', '**/*.rs') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.os }}-cargo-
+              
+      - name: Install cargo-tarpaulin
+        run: cargo install cargo-tarpaulin
+
+      - name: Run tarpaulin
+        run: |
+          cargo tarpaulin --out Xml --fail-under 0
+          Coverage=$(grep -oP '<coverage.*line-rate=\K"0\.\d+"' cobertura.xml | tr -d '"')
+          echo "COVERAGE=$Coverage" >> $GITHUB_ENV
+
+      - name: Add label if coverage < 50%
+        if: ${{ env.COVERAGE < 0.5 }}
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --add-label "not enough tests"
+
+  cancel-run:
+    runs-on: ubuntu-latest
+    needs: [tests, audit, coverage]
+    if: ${{ failure() }}
+    steps:
+      - name: Cancel current workflow run if any job failed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.run_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "Fetching workflow ID for run $RUN_ID in $REPO"
+
+          WORKFLOW_ID=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/$REPO/actions/runs/$RUN_ID \
+            | jq -r '.workflow_id')
+
+          echo "Found workflow ID: $WORKFLOW_ID"
+
+          echo "Cancelling run $RUN_ID"
+          curl -s -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/$REPO/actions/runs/$RUN_ID/cancel
+

@@ -1,0 +1,7 @@
+Package: simeis-server
+Version: 1.0.1
+Priority: optional
+Architecture: all
+Depends: cmatrix (>= 2.0-3)
+Maintainer: CYM Clement Yanis Mateo
+Description: Automatic debian packege generated of simeis server

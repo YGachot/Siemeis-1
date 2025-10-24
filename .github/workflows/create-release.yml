@@ -1,0 +1,45 @@
+name: Creation de la release
+
+on:
+  push:
+    branches:
+      - 'release/**'
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: write
+
+jobs:
+    create-release:
+        runs-on: ubuntu-latest
+        steps:
+
+          - name: Checkout repo
+            uses: actions/checkout@v4
+
+          - name: Build application
+            run: make build
+        
+          - name: declare version
+            id: version
+            run: |
+              VERSION="$(cat version.txt | tr -d 'version = ')"
+              echo "version=$VERSION" >> $GITHUB_OUTPUT  
+
+          - name: Create debian pkg
+            run: mkdir -p ./debian/usr/bin && cp target/release/simeis-server ./debian/usr/bin && mkdir -p debian/DEBIAN && find ./debian -type d | xargs chmod 755 && cp control debian/DEBIAN && dpkg-deb --build debian && mv debian.deb simeis-server-CYM_to_debian_V${{steps.version.outputs.version}}.deb
+
+          - name: Release the new binaries
+            uses: mini-bomba/create-github-release@v1.2.0
+            with:
+              token: ${{ secrets.GITHUB_TOKEN }}
+              tag: "${{steps.version.outputs.version}}"
+              name: "Latest Commit, that compiles"
+              body: |
+                  This is automatic release generation
+              files: |
+                  target/release/simeis-server*
+                  simeis-server-CYM_to_debian_V${{steps.version.outputs.version}}.deb
+              clear_attachments: true
+

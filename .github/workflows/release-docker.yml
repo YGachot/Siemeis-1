@@ -1,0 +1,45 @@
+name: CI Docker Image
+
+on:
+  push:
+    branches:
+      - 'release/**'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: |
+          TAG=${{ github.ref_name }}
+          TAG_SAFE=${TAG//\//-}
+          echo "TAG_SAFE=$TAG_SAFE" >> $GITHUB_ENV
+          docker build -f .github/Dockerfile -t simeis:$TAG_SAFE .
+
+      - name: Save Docker image as archive
+        run: |
+          docker image save simeis:$TAG_SAFE -o simeis.tar
+
+      - name: Upload Docker image as artifact
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: docker-image
+          path: simeis.tar
+
+      - name: Test image
+        run: |
+          docker run -d -p 8081:8081 simeis:$TAG_SAFE
+          sleep 5
+          curl -f http://localhost:8081/ping | grep pong || exit 1
+
+      - name: Login to DockerHub
+        run: echo "${{ secrets.SECRET_NAME }}" | docker login -u litchipi --password-stdin
+
+      - name: Push image to DockerHub
+        run: |
+          docker tag simeis:$TAG_SAFE litchipi/simeis-clement-mateo-yanis:$TAG_SAFE
+          docker push litchipi/simeis-clement-mateo-yanis:$TAG_SAFE
